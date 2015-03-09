@@ -1,0 +1,70 @@
+.poem-slider {
+    top: 50%;
+    position: absolute;
+    left: 12.5%;
+    text-align: center;
+    width: 75%;
+    transform: translateY(-50%);
+    border: 1px solid #424242;
+    padding: 3em;
+    background-color: #252525;
+    box-shadow: 2px 2px 0 #181818;
+    border-radius: 0.2em;
+}
+.poem-slider-message {
+    display: block;
+    color: #7B7B7B;
+    font-size: 1.2em;
+    text-transform: uppercase;
+    font-weight: 300;
+}
+.poem-slider-input-wrapper {
+    margin: 1em;
+}
+.poem-slider-cta-wrapper {
+}
+.poem-slider-cta {
+	background: none;
+	border: none;
+	transition: transform 200ms;
+	background-color: #448CCC;
+	font-size: 1.4em;
+	color: #222;
+	padding: 0.3em 1em;
+	border-radius: 0.2em;
+	box-shadow: 0.2em 0.2em 0.7em rgba(0, 0, 0, 0.43);
+	position: relative;
+	padding-right: 1.9em;
+	cursor: pointer;
+	transform: scale(1);
+}
+.poem-slider-cta:hover {
+	background-color: #52A2EA;
+	transform: scale(1.03);
+}
+.poem-slider-input-wrapper {
+    margin: 5%;
+}
+.poem-slider-cta:after {
+    pointer-events: none;
+    content: "";
+    width: 0;
+	height: 0;
+	border-style: solid;
+    border-width: 0.5em 0 0.5em 0.6em;
+    border-color: transparent transparent transparent #222;
+    position: absolute;
+    right: 0.7em;
+    top: 0.45em;
+}
+.poem-slider-input {
+    width: 100%;
+}
+
+@media (max-width:700px) {
+	.poem-slider {
+	    width: 90%;
+	    left: 5%;
+	    font-size: 0.9em;
+	}
+}

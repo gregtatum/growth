@@ -1,0 +1,17 @@
+<div class='poem-slider <%= className %>'>
+	<label class='poem-slider-message' for='poem-slider-<%- id %>'><%= message %></label>
+	<div class='poem-slider-input-wrapper'>
+		<input
+			type='range'
+			min='<%- min %>'
+			max='<%- max %>'
+			step='<%- step %>'
+			value='<%- value %>'
+			class='poem-slider-input'
+			id='poem-slider-<%- id %>'
+		/>
+	</div>
+	<div class='poem-slider-cta-wrapper'>
+		<button class='poem-slider-cta'><%- callToAction %></button>
+	</div>
+</div>
