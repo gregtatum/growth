@@ -14,13 +14,13 @@ var routing = {
 			crossroads.parse( newHash );
 		}
 		
-		crossroads.addRoute( '/{name}',	routing.loadUpALevel );
+		crossroads.addRoute( '{name}',	routing.loadUpALevel );
 	
 		crossroads.addRoute( /.*/, function reRouteToMainTitlesIfNoMatch() {
-			hasher.replaceHash('/'+_defaultLevel);
+			hasher.replaceHash(_defaultLevel);
 		});
 		crossroads.addRoute( '/', function reRouteToMainTitlesIfNoMatch() {
-			hasher.replaceHash('/'+_defaultLevel);
+			hasher.replaceHash(_defaultLevel);
 		});
 	
 		hasher.initialized.add(parseHash); // parse initial hash
@@ -30,8 +30,6 @@ var routing = {
 	},
 	
 	showMainTitles : function() {
-		
-		
 
 		_gaq.push( [ '_trackPageview', _baseUrl ] );
 	
@@ -41,7 +39,8 @@ var routing = {
 
 	loadUpALevel : function( levelName ) {
 
-		_gaq.push( [ '_trackPageview', _baseUrl+'/#level/'+levelName ] );
+		_gaq.push( [ '_trackPageview', _baseUrl+'/#'+levelName ] );
+		console.log(_baseUrl+'/#/'+levelName)
 	
 		var levelFound = manifestToPoem.load( levelName );
 	
