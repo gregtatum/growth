@@ -1,56 +1,28 @@
 {
   "name": "growth",
   "version": "0.0.1",
-  "gulpfile": {
-    "transforms": [
-      "glslify",
-      "brfs"
-    ],
-    "paths": {
-      "entry": "./js",
-      "js": [
-        "js/**/*.js",
-        "manifests/**/*.js",
-        "gulpfile.js"
-      ],
-      "jsWatch": [
-        "js/**/*",
-        "manifests/**/*.js",
-        "gulpfile.js"
-      ],
-      "hint": [
-        "assets/build/bundle.js",
-        "gulpfile.js"
-      ],
-      "build": "./assets/build/",
-      "bundleName": "bundle.js",
-      "minName": "bundle.min.js",
-      "mapName": "bundle.min.map",
-      "svg": "./assets/svg/*.svg",
-      "svgBuild": "./assets/fonts/icons",
-      "svgTemplates": "./assets/svg/templates/"
-    }
-  },
-	"browserify": {
+  "browserify": {
     "transform": [
       "glslify",
       "brfs"
     ]
-	},
-	"scripts": {
-		"start": "beefy ./js:\"assets/build/bundle.min.js\" --index=index.html --open"
-	},
+  },
+  "scripts": {
+    "build": "browserify ./js/index.js -d -g [uglifyify -x .js] | exorcist assets/build/bundle.js.map > assets/build/bundle.js",
+    "start": "budo js/index.js:assets/build/bundle.js --live --verbose | garnish"
+  },
   "devDependencies": {
     "beefy": "^2.1.3",
     "brfs": "^1.4.0",
+    "budo": "^4.0.0",
     "crossroads": "^0.12.0",
     "events": "^1.0.2",
+    "exorcist": "^0.4.0",
     "glsl-hsv2rgb": "^1.0.0",
     "glsl-noise": "0.0.0",
     "glsl-random": "0.0.4",
     "glslify": "^1.6.0",
     "gulp": "^3.8.7",
-    "gulpfile": "git://github.com/TatumCreative/gulpfile.git#v1.2.1",
     "hasher": "^1.2.0",
     "insert-css": "^0.2.0",
     "localforage": "^1.2.0",
@@ -58,6 +30,7 @@
     "rsvp": "^3.0.14",
     "soundcloud-badge": "0.0.0",
     "three-glslify": "^2.0.1",
+    "uglifyify": "^3.0.1",
     "watchify": "^2.4.0"
   },
   "dependencies": {

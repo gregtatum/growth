@@ -4,6 +4,15 @@ var Random = require('../../utils/random')
 
 var internals = {
 	
+	addBaseSphere : function( scene ) {
+	
+		var geometry = new THREE.SphereGeometry(100, 40, 5, 0, Math.PI * 2, 0, Math.PI * 0.3);
+		var material = new THREE.MeshBasicMaterial( {color: 0x333333, side:THREE.DoubleSide} );
+		var sphere = new THREE.Mesh( geometry, material );
+		sphere.position.y = -99.5
+		poem.scene.add( sphere );
+	},
+	
 	travelTreeFn : function( rootBone, callback ) {
 	
 		// callback( bone, depth, sibling, iteration, maxDepth )
@@ -60,10 +69,10 @@ var internals = {
 		return function( e, bone, depth, sibling, iteration, maxDepth ) {
 		
 			var weight = depth / maxDepth
-
-			bone.rotation.z = weight * Math.sin( bone.randomRotation[0] * e.now * 0.0005 )
-			bone.rotation.y = weight * Math.sin( bone.randomRotation[1] * e.now * 0.000066 )
-			bone.rotation.x = weight * Math.sin( bone.randomRotation[2] * e.now * 0.0002 )
+			
+			bone.rotation.z = weight * Math.sin( bone.randomRotation[0] * (e.elapsed + 100000) * 0.0005 )
+			bone.rotation.y = weight * Math.sin( bone.randomRotation[1] * (e.elapsed + 200000) * 0.000066 )
+			bone.rotation.x = weight * Math.sin( bone.randomRotation[2] * (e.elapsed + 300000) * 0.0002 )
 		}
 	},
 
@@ -110,40 +119,68 @@ var internals = {
 			rootBone,
 			internals.recursiveWriggleFn( config.growthTime )
 		)
-	
+		
 		return function( e ) {
 		
 			var bone = mesh
-	
-			// mesh.skeletonHelper.update()
-			var now = e.now * 0.005
-		
+			
 			wriggle( e )
 			grow( e )
 		
 		}
 	},
 	
-	start : function( config, poem, depth ) {
+	start : function( config, poem, sliderValue ) {
 		
 		var $msg = $("<div class='preload-message'>Loading up some ones and zeros to grow...</div>")
 		$('#container').append(	$msg )
 	
-		//hack!
-		config.depth = depth
+		var depthSteps = 50
+		
+		var treeMeshConfig = _.extend({}, config, {
+			depth : Math.floor( sliderValue / depthSteps ),
+			depthRemainder : sliderValue % depthSteps,
+			depthSteps : depthSteps
+		})
+		
+		console.log( "Slider:", sliderValue )
+		console.log( "Depth:", treeMeshConfig.depth )
+		console.log( "Depth Remainder:", treeMeshConfig.depthRemainder )
+		
 	
 		setTimeout(function deferredTreeGrowth() {
 			
-			var mesh = GenerateTreeMesh( config );
+			var mesh = GenerateTreeMesh( treeMeshConfig );
 			
 			// mesh.scale.multiplyScalar( 1 )
 			poem.scene.add( mesh )
+			
+			internals.countMeshChildren( mesh )
+			
+			internals.addBaseSphere( poem.scene )
 			
 			poem.emitter.on( 'update', internals.updateFn( mesh, config ) )
 			
 			$msg.remove()			
 			
 		}, 500)
+		
+	},
+	
+	countMeshChildren : function( scene ) {
+		
+		function count( obj ) {
+
+			var childCount = obj.children.length
+
+			for( var i=0; i < obj.children.length; i++ ) {
+				childCount += count( obj.children[i] )
+			}
+
+			return childCount
+		}
+
+		console.log( "Total mesh objects:", count( scene ) )
 		
 	}
 
@@ -165,14 +202,14 @@ module.exports = function treeGrowth( poem, properties ) {
 	  , growthTime		: 10000
 	}, properties )
 	
-	var exports = {
+	var api = {
 		start : _.partial( internals.start, config, poem )
 	}
 
 	if( config.autoStart ) {
-		internals.start( config, exports, poem, config.depth )
+		internals.start( config, api, poem, config.depth )
 	}
 	
-	return exports
+	return api
 	
 }

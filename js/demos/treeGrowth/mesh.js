@@ -138,6 +138,8 @@ var internals = {
 	  , maxBranch
 	  , radiusShrink
 	  , radiusShrinkI
+	  , depthRemainder
+	  , depthSteps
 	) {
 
 		if( depth === targetDepth ) return
@@ -172,6 +174,12 @@ var internals = {
 		} else {
 			rand = maxBranch
 		}
+		
+		// Allow the depth determination to be more stepped than just by depth
+		// Randomly stop going down to the last level by a certain probability
+		if( depth + 1 === targetDepth ) {
+			rand = Math.random() > depthRemainder / depthSteps ? rand : 0
+		}
 	
 		for( var i=0; i < rand; i++ ) {
 			internals.recursiveTubes(
@@ -187,6 +195,8 @@ var internals = {
 			  , maxBranch
 			  , radiusShrink * radiusShrinkI
 			  , radiusShrinkI
+			  , depthRemainder
+			  , depthSteps
 			)
 		}
 	
@@ -241,6 +251,9 @@ var internals = {
 		  , config.maxBranch     // maxBranch
 		  , 1                    // radiusShrink
 		  , config.radiusShrink  // radiusShrinkI
+		  , config.depthRemainder
+		  , config.depthSteps
+			
 		)
 	
 		geometry.computeFaceNormals()

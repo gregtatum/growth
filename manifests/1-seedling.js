@@ -31,11 +31,11 @@ module.exports = {
 			function: require("../js/components/slider"),
 			properties: {
 		  		message : "Adjust the Intensity",
-		  		min: 6,
-		  		max: 12,
+		  		min: 300,
+		  		max: 600,
 		  		step: 1,
-				value: 8,
-		  		callToAction: "Plant the Seed",
+				value: 400,
+		  		callToAction: "Start Growing",
 				destroyOnSubmit : true,
 		    	callback : function( poem, number ) {
 					poem.treeGrowth.start( number )
