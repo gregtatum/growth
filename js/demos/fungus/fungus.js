@@ -2,15 +2,17 @@ var KdTree = require('../../vendor/kd-tree/kdTree').kdTree
 
 function _createMesh( poem, config ) {
 
-	var geometry = new THREE.SphereGeometry(
-		config.radius          // radius
-	  , config.widthSegments   // widthSegments
-	  , config.heightSegments  // heightSegments
-	  , 0                      // phiStart
-	  , Math.PI * 2            // phiLength
-	  , 0                      // thetaStart
-	  , config.thetaLength     // thetaLength
-	)
+	// var geometry = new THREE.SphereGeometry(
+	// 	config.radius          // radius
+	//   , config.widthSegments   // widthSegments
+	//   , config.heightSegments  // heightSegments
+	//   , 0                      // phiStart
+	//   , Math.PI * 2            // phiLength
+	//   , 0                      // thetaStart
+	//   , config.thetaLength     // thetaLength
+	// )
+	
+	var geometry = new THREE.IcosahedronGeometry( config.radius, 5 )
 	
 	var material = new THREE.MeshPhongMaterial({
 		emissive : 0x000000
@@ -20,7 +22,9 @@ function _createMesh( poem, config ) {
 
 	var mesh = new THREE.Mesh( geometry, material )
 	
-	mesh.position.y -= config.radius * 0.2
+	// mesh.position.y -= config.radius * 0.2
+	
+	mesh.position.y += config.radius * 1
 	poem.scene.add( mesh )
 	
 	return mesh
