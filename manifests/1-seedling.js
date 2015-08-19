@@ -23,8 +23,9 @@ module.exports = {
 				title : "Growth #1",
 				subtitle : "From Seedling To Tree",
 				// titleCss : { "font-size": "3.35em" },
-				// subtitleCss : {	"font-size": "0.7em" },
-				showArrowNext : true
+				subtitleCss : {	"font-size": "1.29em" },
+				arrowPrevHref : false,
+				arrowNextHref : "#/2-fungus",
 			}
 		},
 		slider : {
@@ -41,7 +42,7 @@ module.exports = {
 					poem.treeGrowth.start( number )
 				}
 			}
-		},	
+		},
 		controls : {
 			construct: require("../js/components/cameras/Controls"),
 			properties: {

@@ -5,7 +5,7 @@ module.exports = {
 	config : {
 		camera : {
 			z : -300,
-			y : 25
+			y : -100
 		},
 		// renderer : {
 		// 	useEffects : true
@@ -23,25 +23,29 @@ module.exports = {
 				title : "Growth #2",
 				subtitle : "The fungal state",
 				// titleCss : { "font-size": "3.35em" },
-				// subtitleCss : {	"font-size": "0.7em" },
-				showArrowNext : true
+				subtitleCss : {
+					"font-size": "1.36em",
+					"letter-spacing" : "0.2em",
+				},
+				arrowPrevHref : "#/1-seedling",
+				arrowNextHref : "http://gregtatum.com/category/interactive/",
 			}
 		},
-		// slider : {
-		// 	function: require("../js/components/slider"),
-		// 	properties: {
-		//   		message : "Adjust the Intensity",
-		//   		min: 300,
-		//   		max: 600,
-		//   		step: 1,
-		// 		value: 400,
-		//   		callToAction: "Start Growing",
-		// 		destroyOnSubmit : true,
-		//     	callback : function( poem, number ) {
-		// 			poem.treeGrowth.start( number )
-		// 		}
-		// 	}
-		// },
+		slider : {
+			function: require("../js/components/slider"),
+			properties: {
+		  		message : "How hot do you want your device to get?",
+		  		min: 0.1,
+		  		max: 1,
+		  		step: 0.001,
+				value: 0.5,
+		  		callToAction: "Grow a Fungus",
+				destroyOnSubmit : true,
+		    	callback : function( poem, number ) {
+					poem.fungus( number )
+				}
+			}
+		},
 		controls : {
 			construct: require("../js/components/cameras/Controls"),
 			properties: {

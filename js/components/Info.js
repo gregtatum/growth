@@ -11,7 +11,19 @@ var Info = function( poem, properties ) {
 	if( properties.titleCss ) $("#info-title").css( properties.titleCss );
 	if( properties.subtitleCss ) $("#info-subtitle").css( properties.subtitleCss );
 	
+	if( properties.arrowNextHref ) {
+		$(".arrow-next").attr('href', properties.arrowNextHref );
+		$(".arrow-next").show();
+	} else {
+		$(".arrow-next").hide();
+	}
 	
+	if( properties.arrowPrevHref ) {
+		$(".arrow-prev").attr('href', properties.arrowPrevHref );
+		$(".arrow-prev").show();
+	} else {
+		$(".arrow-prev").hide();
+	}	
 	if( properties.documentTitle ) document.title = properties.documentTitle;
 	
 	if( properties.showArrowNext ) $(".arrow-next").show();

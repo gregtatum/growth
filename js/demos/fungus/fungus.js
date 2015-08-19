@@ -1,4 +1,6 @@
 var KdTree = require('../../vendor/kd-tree/kdTree').kdTree
+var Ease = require('eases/elastic-out')
+var Lerp = require('lerp')
 
 function _createBones ( mesh, config ) {
 
@@ -43,7 +45,7 @@ function _createBones ( mesh, config ) {
 
 function _calculateSkinWeights( geometry, allBones ) {
 	
-	_.each( geometry.vertices, function( vertex ) {
+	_.each( geometry.vertices, function calculateSkinWeight( vertex ) {
 		
 		var result = _.chain( allBones )
 		
@@ -79,10 +81,14 @@ function _calculateSkinWeights( geometry, allBones ) {
 		));
 
 		geometry.skinWeights.push( new THREE.Vector4(
-			sum > 0 ? 1 - result[0].distance / sum : 0.25,
-			sum > 0 ? 1 - result[1].distance / sum : 0.25,
-			sum > 0 ? 1 - result[2].distance / sum : 0.25,
-			sum > 0 ? 1 - result[3].distance / sum : 0.25
+			// sum > 0 ? 1 - result[0].distance / sum : 0.25,
+			// sum > 0 ? 1 - result[1].distance / sum : 0.25,
+			// sum > 0 ? 1 - result[2].distance / sum : 0.25,
+			// sum > 0 ? 1 - result[3].distance / sum : 0.25
+			4/10,
+			3/10,
+			2/10,
+			1/10
 		));
 		
 		// geometry.skinIndices.push( new THREE.Vector4(0,0,0,0) );
@@ -91,52 +97,136 @@ function _calculateSkinWeights( geometry, allBones ) {
 	})
 }
 
+function _calculateSkinWeights2( geometry, allBones ) {
+	
+	_.each( geometry.vertices, function calculateSkinWeight( vertex ) {
+		
+		var minValues = []
+		var minIndices = []
+		var pickCount = 4
+		
+		//Go through each bone
+		for( var i=0; i < allBones.length; i++ ) {
+			
+			var bone = allBones[i]
+			var distanceSq = vertex.distanceToSquared( bone.position )
+			
+			//Check to see if this distance is smaller
+			for( var j=0; j < pickCount; j++ ) {
+				if( distanceSq < minValues[j] ) {
+					
+					var prevValue
+					var nextValue = minValues[j]
+					minValues[j] = distanceSq
+
+					var prevIndex
+					var nextIndex = minIndices[j]
+					minIndices[j] = distanceSq
+
+					for( j++; j < pickCount; j++ ) {
+						prevValue = minValues[j]
+						minValues[j] = nextValue
+						nextValue = prevValue
+
+						prevMin = minValues[j]
+						minValues[j] = nextMin
+						nextMin = prevMin
+					}
+					break;
+				}
+			}
+			
+			var sum = _.sum(minValues)
+		
+			geometry.skinIndices.push( new THREE.Vector4(
+				2 * minIndices[0],
+				2 * minIndices[1],
+				2 * minIndices[2],
+				2 * minIndices[3]
+			));
+
+			geometry.skinWeights.push( new THREE.Vector4(
+				4/10,
+				3/10,
+				2/10,
+				1/10
+			));
+		
+		}
+	})
+}
+
 function _createMesh( poem, config ) {
 
-	var geometry = new THREE.SphereGeometry(
-		config.radius          // radius
-	  , config.widthSegments   // widthSegments
-	  , config.heightSegments  // heightSegments
-	  , 0                      // phiStart
-	  , Math.PI * 2            // phiLength
-	  , 0                      // thetaStart
-	  , config.thetaLength     // thetaLength
-	)
+	// var geometry = new THREE.SphereGeometry(
+	// 	config.radius          // radius
+	//   , config.widthSegments   // widthSegments
+	//   , config.heightSegments  // heightSegments
+	//   , 0                      // phiStart
+	//   , Math.PI * 2            // phiLength
+	//   , 0                      // thetaStart
+	//   , config.thetaLength     // thetaLength
+	// )
 
-	// var geometry = new THREE.IcosahedronGeometry( config.radius, 4 )
+	var geometry = new THREE.IcosahedronGeometry( config.radius, config.subdivisions )
+	
+	var baseHue = Math.random()
+		
+	function generateColor( face, prop ) {
+		
+		var vertIndex = face[prop]
+		var vert = geometry.vertices[ vertIndex ]
+		var unitHue = (config.radius + vert.y ) / (2 * config.radius)
+		var hue = (baseHue + unitHue * config.hueRange) % 1
+		var color = new THREE.Color().setHSL( hue, 0.5, 0.5 )
+		
+		face.vertexColors.push( color )
+	}
+	
+	for(var i=0; i < geometry.faces.length; i++) {
+		
+		generateColor( geometry.faces[i], "a" )
+		generateColor( geometry.faces[i], "b" )
+		generateColor( geometry.faces[i], "c" )
+		
+	}
+	
+	geometry.colorsNeedUpdate = true
 	
 	var material = new THREE.MeshPhongMaterial({
 		skinning : true
 	  , emissive : 0x000000
-	  , color : 0x224488
-	  // , wireframe : true
+	  // , color : 0x224488
+	  , color : 0xffffff
+	  , wireframe : true
+	  , vertexColors : THREE.VertexColors
 	})
 
-	var mesh = new THREE.SkinnedMesh( geometry, material )
+	var mesh = new THREE.SkinnedMesh()
+	mesh.geometry = geometry
+	mesh.material = material 
 	
-	mesh.position.y -= config.radius * 0.2
+	// mesh.position.y -= config.radius * 0.2
 	
-	// mesh.position.y += config.radius * 1
 	poem.scene.add( mesh )
 	
 	return mesh
 }
 
-function _updateFn( mesh, tree, config, current ) {
+function _updateGrowthFn( tree, bonePositions, config, current ) {
 	
-	var verts = mesh.geometry.vertices
 	var x,y,z
 	
-	return function() {
+	return function updateGrowth(e) {
 		
 		current.distance *= config.distanceGrowth
-		
-		for( var i=0; i < verts.length; i++ ) {
-			var vert = verts[i]
+
+		for( var i=0; i < bonePositions.length; i++ ) {
+			var bone = bonePositions[i]
 			
 			x = y = z = 0
 			
-			var results = tree.nearest( vert, config.neighborsCount )
+			var results = tree.nearest( bone, config.neighborsCount )
 			
 			for( var j=0; j < results.length; j++ ) {
 				
@@ -144,9 +234,9 @@ function _updateFn( mesh, tree, config, current ) {
 				var distance = results[j][1]
 				
 				if( distance <= current.distance ) {
-					x += ( vert.x - nearest.x ) * distance / current.distance
-					y += ( vert.y - nearest.y ) * distance / current.distance
-					z += ( vert.z - nearest.z ) * distance / current.distance
+					x += ( bone.x - nearest.x ) * distance / current.distance
+					y += ( bone.y - nearest.y ) * distance / current.distance
+					z += ( bone.z - nearest.z ) * distance / current.distance
 				}
 			}
 			
@@ -156,63 +246,164 @@ function _updateFn( mesh, tree, config, current ) {
 				y = y / results.length
 				z = z / results.length
 				
-				vert.x += config.moveSpeed * x
-				vert.y += config.moveSpeed * Math.max(0, y)
-				vert.z += config.moveSpeed * z
+				bone.x += config.moveSpeed * x
+				bone.y += config.moveSpeed * Math.max(0, y)
+				bone.z += config.moveSpeed * z
+				
 			}
 		}
 		
-		mesh.geometry.verticesNeedUpdate = true
-		mesh.geometry.normalsNeedUpdate = true
 	}
 }
 
-function _update2Fn( mesh, tree, bones, config, current ) {
+function _updateSmoothFn( bonePositions, boneNeighbors, config, current ) {
+	
+	var bone = new THREE.Vector3()
+	var ptA = new THREE.Vector3()
+	var ptB = new THREE.Vector3()
+	var ptC = new THREE.Vector3()
+	var ptD = new THREE.Vector3()
+	
+	var vScratch = new THREE.Vector3()
+	var normalA = new THREE.Vector3()
+	var normalB = new THREE.Vector3()
+	var normal = new THREE.Vector3()
+	
+	var plane = new THREE.Plane()
+	
+	return function updateSmooth() {
+		
+		for( var i=0; i < bonePositions.length; i++ ) {
+			var bone = bonePositions[i]
+			var neighbors = boneNeighbors[i]
 
-	return function update2() {
-		for( var i=0; i < bones.length; i+=2 ) {
+			ptA = neighbors[0]
+			ptB = neighbors[1]
+			ptC = neighbors[2]
+			ptD = neighbors[3]
+
+			// Calculate normals
+			normalA.subVectors( ptC, ptA ).cross( vScratch.subVectors( bone, ptA ) ).normalize()
+			normalB.subVectors( ptD, ptB ).cross( vScratch.subVectors( bone, ptB ) ).normalize()
 			
-			bones[i].position.x += _.random(-1,1,true)
-			bones[i].position.y += _.random(-1,1,true)
-			bones[i].position.z += _.random(-1,1,true)
+			//Get averaged normals
+			normal.addVectors( normalA, normalB ).normalize()
 			
+			plane.setFromNormalAndCoplanarPoint( normal, bone )
+			
+			var dA = plane.distanceToPoint( ptA )
+			var dB = plane.distanceToPoint( ptB )
+			var dC = plane.distanceToPoint( ptC )
+			var dD = plane.distanceToPoint( ptD )
+			
+			//Update the points
+			neighbors[0].x -= normal.x * dA * config.smoothSpeed
+			neighbors[0].y -= normal.y * dA * config.smoothSpeed
+			neighbors[0].z -= normal.z * dA * config.smoothSpeed
+			neighbors[1].x -= normal.x * dB * config.smoothSpeed
+			neighbors[1].y -= normal.y * dB * config.smoothSpeed
+			neighbors[1].z -= normal.z * dB * config.smoothSpeed
+			neighbors[2].x -= normal.x * dC * config.smoothSpeed
+			neighbors[2].y -= normal.y * dC * config.smoothSpeed
+			neighbors[2].z -= normal.z * dC * config.smoothSpeed
+			neighbors[3].x -= normal.x * dD * config.smoothSpeed
+			neighbors[3].y -= normal.y * dD * config.smoothSpeed
+			neighbors[3].z -= normal.z * dD * config.smoothSpeed
 		}
 	}
 }
+
 function _distance( a, b ) { return b.distanceTo(a) }
+
+function _getBonePositions( bones ) {
+	
+	var bonesEven = _.filter( bones, function( bone, i ) {
+		return i % 2 === 0
+	})
+	
+	return _.pluck(bonesEven, "position")
+}
+
+function _addSkeletonHelper( poem, mesh ) {
+	var skeletonHelper = new THREE.SkeletonHelper( mesh );
+	skeletonHelper.material.linewidth = 2;
+	skeletonHelper.material.opacity = 0.3;
+	skeletonHelper.material.transparent = true;
+	
+	poem.scene.add( skeletonHelper )
+	
+	poem.emitter.on('update', skeletonHelper.update.bind(skeletonHelper))
+}
+
+function _getBoneNeighbors( positions, tree ) {
+	
+	return _.map( positions, function selectNearest( position ) {
+		
+		var pointAndDistances = tree.nearest( position, 5 )
+		var points = _.map(pointAndDistances, function(tuple) {
+			return tuple[0]
+		})
+		
+		return _.filter(points, function(pt) {
+			return pt !== position
+		})
+	})
+}
 
 module.exports = function createFungus( poem, properties ) {
 	
-	var config = _.extend({
-		radius          : 100
-	  , neighborsCount  : 3
-	  , nearestDistance : 5
-	  , distanceGrowth  : 1.001
-	  , moveSpeed       : 0.1
-	  , widthSegments   : 40
-	  , heightSegments  : 10
-	  , boneCount       : 50
-	  , thetaLength     : Math.PI * 0.3
-	}, properties)
-	
-	var current = {
-		distance : config.nearestDistance
-	}
+	return function startGrowingFungus( number ) {
 		
-	var mesh = _createMesh( poem, config )
-	var bones = _createBones( mesh, config )
-	var tree = new KdTree( _.clone(mesh.geometry.vertices), _distance, ['x','y','z'] )
+		var config = _.extend({
+			radius          : 10
+		  , neighborsCount  : 3
+		  , nearestDistance : 10
+		  , distanceGrowth  : 1.001
+		  , moveSpeed       : 0.1
+		  , rotationSpeed   : 0.0001
+		  , subdivisions    : 7
+		  // , widthSegments   : 40 * 2
+		  // , heightSegments  : 10 * 2
+		  , boneCount       : 400
+		  , thetaLength     : Math.PI * 0.3
+		  , smoothSpeed     : 0.005
+		  , hueRange        : 0.2
+		}, properties)
+		
+		config.subdivisions = Math.round(number * config.subdivisions)
+		config.boneCount = Math.round(number * config.boneCount)
+		
+	
+		var current = {
+			distance : config.nearestDistance
+		}
+	
+		// console.profile("blob")
+		var mesh = _createMesh( poem, config )
+		var bones = _createBones( mesh, config )
+		var bonePositions = _getBonePositions( bones )
+		var tree = new KdTree( bonePositions, _distance, ['x','y','z'] )
+		var boneNeighbors = _getBoneNeighbors( bonePositions, tree )
 
-	var skeletonHelper = new THREE.SkeletonHelper( mesh );
-	skeletonHelper.material.linewidth = 2;
-	poem.scene.add( skeletonHelper )
+		_addSkeletonHelper( poem, mesh )
+
+		poem.emitter.on('update', _updateGrowthFn( tree, bonePositions, config, current ) )
+		poem.emitter.on('update', _updateSmoothFn( bonePositions, boneNeighbors, config, current ) )
+
+		var accumulate = 1
+		poem.emitter.on('update', function(e) {
+			accumulate += e.dt
+			var amt = 50
+			mesh.position.y = 50 + amt + -amt * Ease( Math.min(1, accumulate / 10000) )
+			mesh.rotation.y += e.dt * config.rotationSpeed
+		})
+
+		// poem.emitter.once('update', function() {
+		// 	console.profileEnd("blob")
+		// })
 	
-	poem.emitter.on('update', function() {
-		skeletonHelper.update();
-	})
+		return mesh
+	}	
 	
-	// poem.emitter.on('update', _updateFn( mesh, tree, config, current ) )
-	poem.emitter.on('update', _update2Fn( mesh, tree, bones, config, current ) )
 	
-	return mesh
 }
